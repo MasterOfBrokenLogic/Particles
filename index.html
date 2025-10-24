@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Free Swipe Comet Particles</title>
+<title>Free Swipe Particles</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
 html, body {margin:0; padding:0; width:100%; height:100%; background:#111; overflow:hidden;}
@@ -38,9 +38,7 @@ function resize() {
     for(let x=0; x<cols; x++){
       particles.push({
         x: x*SPACING + SPACING/2,
-        y: y*SPACING + SPACING/2,
-        ox: x*SPACING + SPACING/2,
-        oy: y*SPACING + SPACING/2
+        y: y*SPACING + SPACING/2
       });
     }
   }
@@ -63,16 +61,17 @@ function step(){
   const w = canvas.width;
   const h = canvas.height;
 
-  ctx.fillStyle = 'rgba(17,17,17,0.2)'; // slight fade for trail
+  // Fade canvas slightly to create trails
+  ctx.fillStyle = 'rgba(17,17,17,0.2)';
   ctx.fillRect(0,0,w,h);
 
-  // draw static field
+  // Draw static particle field
   ctx.fillStyle = 'rgb(220,220,220)';
   for(let p of particles){
     ctx.fillRect(p.x,p.y,0.5,0.5);
   }
 
-  // process swipes
+  // Update and draw swipe trails
   for(let swipe of swipes){
     let hx = swipe.history[swipe.history.length-1].x;
     let hy = swipe.history[swipe.history.length-1].y;
@@ -80,7 +79,6 @@ function step(){
     swipe.vx *= 0.92;
     swipe.vy *= 0.92;
 
-    // move along last direction
     if(swipe.history.length>1){
       const prev = swipe.history[swipe.history.length-2];
       swipe.vx += (hx - prev.x)*0.2;
@@ -93,7 +91,6 @@ function step(){
     swipe.history.push({x:hx, y:hy});
     if(swipe.history.length>trailLength) swipe.history.shift();
 
-    // draw trail
     for(let i=0;i<swipe.history.length;i++){
       const t = swipe.history[i];
       ctx.fillStyle = `rgba(220,220,220,${i/trailLength})`;
