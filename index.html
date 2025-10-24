@@ -26,7 +26,7 @@ const ctx = canvas.getContext('2d');
 let SPACING = 4;
 let particles = [];
 let swipes = [];
-const trailLength = 10;
+const trailLength = 15;
 
 function resize() {
   canvas.width = window.innerWidth;
@@ -48,10 +48,10 @@ window.addEventListener('resize', resize);
 resize();
 
 function addSwipe(x,y){
-  swipes.push({history: [{x,y}], vx:0, vy:0});
+  swipes.push({history: [{x,y}]});
 }
 
-canvas.addEventListener('mousemove', e => {addSwipe(e.clientX,e.clientY);});
+canvas.addEventListener('mousemove', e => addSwipe(e.clientX,e.clientY));
 canvas.addEventListener('touchmove', e => {
   for(let t of e.touches) addSwipe(t.clientX,t.clientY);
   e.preventDefault();
@@ -61,7 +61,6 @@ function step(){
   const w = canvas.width;
   const h = canvas.height;
 
-  // Fade canvas slightly to create trails
   ctx.fillStyle = 'rgba(17,17,17,0.2)';
   ctx.fillRect(0,0,w,h);
 
@@ -71,26 +70,10 @@ function step(){
     ctx.fillRect(p.x,p.y,0.5,0.5);
   }
 
-  // Update and draw swipe trails
+  // Draw swipe trails
   for(let swipe of swipes){
-    let hx = swipe.history[swipe.history.length-1].x;
-    let hy = swipe.history[swipe.history.length-1].y;
-
-    swipe.vx *= 0.92;
-    swipe.vy *= 0.92;
-
-    if(swipe.history.length>1){
-      const prev = swipe.history[swipe.history.length-2];
-      swipe.vx += (hx - prev.x)*0.2;
-      swipe.vy += (hy - prev.y)*0.2;
-    }
-
-    hx += swipe.vx;
-    hy += swipe.vy;
-
-    swipe.history.push({x:hx, y:hy});
+    swipe.history.push({...swipe.history[swipe.history.length-1]});
     if(swipe.history.length>trailLength) swipe.history.shift();
-
     for(let i=0;i<swipe.history.length;i++){
       const t = swipe.history[i];
       ctx.fillStyle = `rgba(220,220,220,${i/trailLength})`;
