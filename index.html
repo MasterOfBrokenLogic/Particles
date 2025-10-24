@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Swipe Comet Particles</title>
+<title>Ultimate Comet Swipe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
 html, body {margin:0; padding:0; width:100%; height:100%; background:#111; overflow:hidden;}
@@ -10,11 +10,6 @@ canvas {display:block;}
 </style>
 <script>
 document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('keydown', e => {
-  if(e.ctrlKey && (e.key==='u'||e.key==='U')) e.preventDefault();
-  if(e.ctrlKey && e.shiftKey && (e.key==='I'||e.key==='i')) e.preventDefault();
-  if(e.key==='F12') e.preventDefault();
-});
 </script>
 </head>
 <body>
@@ -23,9 +18,9 @@ document.addEventListener('keydown', e => {
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-let SPACING = 6;
+let SPACING = 3;
 let DRAG = 0.92;
-let EASE = 0.15;
+let EASE = 0.12;
 let COLOR = 220;
 let particles = [];
 let pointers = [];
@@ -67,17 +62,18 @@ function step(){
   const w = canvas.width;
   const h = canvas.height;
 
-  ctx.fillStyle = 'rgba(17,17,17,0.25)';
+  // semi-transparent overlay for trail effect
+  ctx.fillStyle = 'rgba(17,17,17,0.2)';
   ctx.fillRect(0,0,w,h);
 
-  // particle animation
+  // update particles
   for(let p of particles){
     for(let pointer of pointers){
       let dx = pointer.x - p.x;
       let dy = pointer.y - p.y;
       let d = dx*dx + dy*dy;
-      if(d < 2500){ // radius of effect
-        let f = -2500/d;
+      if(d < 3600){ // influence radius
+        let f = -3600/d;
         let angle = Math.atan2(dy,dx);
         p.vx += f*Math.cos(angle);
         p.vy += f*Math.sin(angle);
@@ -88,18 +84,12 @@ function step(){
   }
 
   // draw particles
-  const img = ctx.createImageData(w,h);
-  const data = img.data;
+  ctx.fillStyle = `rgb(${COLOR},${COLOR},${COLOR})`;
   for(let p of particles){
-    let n = (~~p.x + ~~p.y*w)*4;
-    data[n] = data[n+1] = data[n+2] = COLOR;
-    data[n+3] = 255;
+    ctx.fillRect(p.x,p.y,1,1);
   }
-  ctx.putImageData(img,0,0);
 
-  // clear pointers after frame
   pointers = [];
-
   requestAnimationFrame(step);
 }
 
