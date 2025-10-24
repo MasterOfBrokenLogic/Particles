@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Physics Comet Swipe</title>
+<title>Ultimate Comet Swipe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
 html, body {margin:0; padding:0; width:100%; height:100%; background:#111; overflow:hidden;}
@@ -18,12 +18,10 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-let SPACING = 2;
-let PARTICLE_SIZE = 1.5;
-let DRAG = 0.90;
-let EASE = 0.03;       // slow return to original position
+let SPACING = 3;
+let DRAG = 0.92;
+let EASE = 0.12;
 let COLOR = 220;
-let INFLUENCE_RADIUS = 4000; // squared distance
 let particles = [];
 let pointers = [];
 
@@ -64,32 +62,31 @@ function step(){
   const w = canvas.width;
   const h = canvas.height;
 
-  // fade for trail effect
-  ctx.fillStyle = 'rgba(17,17,17,0.18)';
+  // semi-transparent overlay for trail effect
+  ctx.fillStyle = 'rgba(17,17,17,0.2)';
   ctx.fillRect(0,0,w,h);
 
+  // update particles
   for(let p of particles){
-    // swipe influence
     for(let pointer of pointers){
       let dx = pointer.x - p.x;
       let dy = pointer.y - p.y;
       let d = dx*dx + dy*dy;
-      if(d < INFLUENCE_RADIUS){
-        let f = -INFLUENCE_RADIUS/d;
+      if(d < 3600){ // influence radius
+        let f = -3600/d;
         let angle = Math.atan2(dy,dx);
         p.vx += f*Math.cos(angle);
         p.vy += f*Math.sin(angle);
       }
     }
-    // update position
     p.x += (p.vx *= DRAG) + (p.ox - p.x)*EASE;
     p.y += (p.vy *= DRAG) + (p.oy - p.y)*EASE;
   }
 
   // draw particles
-  ctx.fillStyle = `rgb(${COLOR},${COLOR},${COLOR})`;
+  ctx.fillStyle = rgb(${COLOR},${COLOR},${COLOR});
   for(let p of particles){
-    ctx.fillRect(p.x,p.y,PARTICLE_SIZE,PARTICLE_SIZE);
+    ctx.fillRect(p.x,p.y,1,1);
   }
 
   pointers = [];
