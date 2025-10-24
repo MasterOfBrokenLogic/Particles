@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Physics Comet Swipe</title>
+<title>Buttery Comet Swipe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
 html, body {margin:0; padding:0; width:100%; height:100%; background:#111; overflow:hidden;}
@@ -20,10 +20,11 @@ const ctx = canvas.getContext('2d');
 
 let SPACING = 2;
 let PARTICLE_SIZE = 1.5;
-let DRAG = 0.90;       // slower decay for lingering
-let EASE = 0.03;       // slow return to original position
+let SWIPE_PARTICLE_SIZE = 1; // smaller while swiping
+let DRAG = 0.92;
+let EASE = 0.03;       // slow return
 let COLOR = 220;
-let INFLUENCE_RADIUS = 4000; // radius squared
+let INFLUENCE_RADIUS = 2500; // smaller radius for softer swipe
 let particles = [];
 let pointers = [];
 
@@ -54,42 +55,37 @@ function addPointer(x,y){
   pointers.push({x,y});
 }
 
-canvas.addEventListener('mousemove', e => addPointer(e.clientX,e.clientY));
-canvas.addEventListener('touchmove', e => {
-  for(let t of e.touches) addPointer(t.clientX,t.clientY);
-  e.preventDefault();
-},{passive:false});
+canvas.addEventListener('mousedown', e => addPointer(e.clientX, e.clientY));
+canvas.addEventListener('mousemove', e => { if(e.buttons) addPointer(e.clientX, e.clientY); });
+canvas.addEventListener('touchstart', e => { for(let t of e.touches) addPointer(t.clientX, t.clientY); });
+canvas.addEventListener('touchmove', e => { for(let t of e.touches) addPointer(t.clientX, t.clientY); e.preventDefault(); }, {passive:false});
 
 function step(){
   const w = canvas.width;
   const h = canvas.height;
 
-  // fade for trail effect
   ctx.fillStyle = 'rgba(17,17,17,0.18)';
   ctx.fillRect(0,0,w,h);
 
   for(let p of particles){
-    // swipe influence
+    let particleSize = PARTICLE_SIZE;
     for(let pointer of pointers){
       let dx = pointer.x - p.x;
       let dy = pointer.y - p.y;
       let d = dx*dx + dy*dy;
       if(d < INFLUENCE_RADIUS){
-        let f = -INFLUENCE_RADIUS/d;
+        let f = -INFLUENCE_RADIUS/d * 0.5; // reduce force to prevent blasting
         let angle = Math.atan2(dy,dx);
         p.vx += f*Math.cos(angle);
         p.vy += f*Math.sin(angle);
+        particleSize = SWIPE_PARTICLE_SIZE; // smaller when influenced
       }
     }
-    // update position with drag and slow return to original
     p.x += (p.vx *= DRAG) + (p.ox - p.x)*EASE;
     p.y += (p.vy *= DRAG) + (p.oy - p.y)*EASE;
-  }
 
-  // draw particles
-  ctx.fillStyle = `rgb(${COLOR},${COLOR},${COLOR})`;
-  for(let p of particles){
-    ctx.fillRect(p.x,p.y,PARTICLE_SIZE,PARTICLE_SIZE);
+    ctx.fillStyle = `rgb(${COLOR},${COLOR},${COLOR})`;
+    ctx.fillRect(p.x,p.y,particleSize,particleSize);
   }
 
   pointers = [];
