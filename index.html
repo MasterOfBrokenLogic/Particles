@@ -57,8 +57,7 @@ resize();
 canvas.addEventListener('mousemove', e => {pointer.x = e.clientX; pointer.y = e.clientY; man = true;});
 canvas.addEventListener('touchmove', e => {
   const t = e.touches[0];
-  pointer.x = t.clientX;
-  pointer.y = t.clientY;
+  pointer.x = t.clientX; pointer.y = t.clientY;
   man = true;
   e.preventDefault();
 },{passive:false});
@@ -84,15 +83,15 @@ function step(){
     const p = particles[i];
     const dx = target.x - p.x;
     const dy = target.y - p.y;
-    p.vx += dx*0.002;
-    p.vy += dy*0.002;
-    p.vx *= 0.92;
-    p.vy *= 0.92;
-    p.x += p.vx + (p.ox - p.x)*0.1;
-    p.y += p.vy + (p.oy - p.y)*0.1;
+    p.vx += dx*0.0015; // slower force
+    p.vy += dy*0.0015;
+    p.vx *= 0.93; // slightly more drag
+    p.vy *= 0.93;
+    p.x += p.vx + (p.ox - p.x)*0.08; // slower easing
+    p.y += p.vy + (p.oy - p.y)*0.08;
 
     ctx.fillStyle = 'rgb(220,220,220)';
-    ctx.fillRect(p.x,p.y,1,1);
+    ctx.fillRect(p.x,p.y,0.5,0.5); // smaller particle
   }
 
   requestAnimationFrame(step);
