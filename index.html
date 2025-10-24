@@ -20,10 +20,10 @@ const ctx = canvas.getContext('2d');
 
 let SPACING = 2;
 let PARTICLE_SIZE = 1.5;
-let DRAG = 0.90;       // slower decay for lingering
+let DRAG = 0.90;
 let EASE = 0.03;       // slow return to original position
 let COLOR = 220;
-let INFLUENCE_RADIUS = 4000; // radius squared
+let INFLUENCE_RADIUS = 4000; // squared distance
 let particles = [];
 let pointers = [];
 
@@ -81,7 +81,7 @@ function step(){
         p.vy += f*Math.sin(angle);
       }
     }
-    // update position with drag and slow return to original
+    // update position
     p.x += (p.vx *= DRAG) + (p.ox - p.x)*EASE;
     p.y += (p.vy *= DRAG) + (p.oy - p.y)*EASE;
   }
