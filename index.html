@@ -22,9 +22,12 @@ document.addEventListener('keydown', e => {
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
-let SPACING = 3, DRAG = 0.92, EASE = 0.18, COLOR = 220;
-let particles = [], pointerHistory = [], pointerMax = 5;
-let mx, my, man = false, tx, ty;
+
+let SPACING = 4;
+let particles = [];
+let pointer = {x:0, y:0};
+let pointerHistory = [], maxHistory = 5;
+let tx, ty, man = false;
 
 function resize() {
   canvas.width = window.innerWidth;
@@ -32,8 +35,8 @@ function resize() {
   particles = [];
   const cols = Math.floor(canvas.width / SPACING);
   const rows = Math.floor(canvas.height / SPACING);
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
+  for(let y=0; y<rows; y++){
+    for(let x=0; x<cols; x++){
       particles.push({
         x: x*SPACING + SPACING/2,
         y: y*SPACING + SPACING/2,
@@ -44,63 +47,53 @@ function resize() {
       });
     }
   }
-  tx = canvas.width/2;
-  ty = canvas.height/2;
+  pointer.x = pointer.y = canvas.width/2;
   pointerHistory = [];
 }
 
 window.addEventListener('resize', resize);
 resize();
 
-canvas.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; man = true; });
+canvas.addEventListener('mousemove', e => {pointer.x = e.clientX; pointer.y = e.clientY; man = true;});
 canvas.addEventListener('touchmove', e => {
   const t = e.touches[0];
-  mx = t.clientX; my = t.clientY; man = true;
+  pointer.x = t.clientX;
+  pointer.y = t.clientY;
+  man = true;
   e.preventDefault();
 },{passive:false});
 
-function step() {
-  const w = canvas.width, h = canvas.height;
+function step(){
+  const w = canvas.width;
+  const h = canvas.height;
 
   if(!man){
     const t = +new Date()*0.001;
-    mx = w*0.5 + Math.cos(t*2.1)*Math.cos(t*0.9)*w*0.45;
-    my = h*0.5 + Math.sin(t*3.2)*Math.tan(Math.sin(t*0.8))*h*0.45;
+    pointer.x = w*0.5 + Math.cos(t*2.1)*Math.cos(t*0.9)*w*0.45;
+    pointer.y = h*0.5 + Math.sin(t*3.2)*Math.tan(Math.sin(t*0.8))*h*0.45;
   }
 
-  pointerHistory.push({x: mx, y: my});
-  if(pointerHistory.length > pointerMax) pointerHistory.shift();
+  pointerHistory.push({x:pointer.x, y:pointer.y});
+  if(pointerHistory.length>maxHistory) pointerHistory.shift();
   const target = pointerHistory[0];
-  const tx = target.x;
-  const ty = target.y;
-
-  for(let i=0;i<particles.length;i++){
-    const p = particles[i];
-    const dx = tx - p.x;
-    const dy = ty - p.y;
-    const d = dx*dx + dy*dy;
-    if(d < 6400){
-      const f = -6400/d;
-      const a = Math.atan2(dy,dx);
-      p.vx += f*Math.cos(a);
-      p.vy += f*Math.sin(a);
-    }
-    p.x += (p.vx *= DRAG) + (p.ox - p.x)*EASE;
-    p.y += (p.vy *= DRAG) + (p.oy - p.y)*EASE;
-  }
 
   ctx.fillStyle = 'rgba(17,17,17,0.25)';
   ctx.fillRect(0,0,w,h);
 
-  const img = ctx.createImageData(w,h);
-  const data = img.data;
   for(let i=0;i<particles.length;i++){
     const p = particles[i];
-    const n = (~~p.x + ~~p.y*w)*4;
-    data[n] = data[n+1] = data[n+2] = COLOR;
-    data[n+3] = 255;
+    const dx = target.x - p.x;
+    const dy = target.y - p.y;
+    p.vx += dx*0.002;
+    p.vy += dy*0.002;
+    p.vx *= 0.92;
+    p.vy *= 0.92;
+    p.x += p.vx + (p.ox - p.x)*0.1;
+    p.y += p.vy + (p.oy - p.y)*0.1;
+
+    ctx.fillStyle = 'rgb(220,220,220)';
+    ctx.fillRect(p.x,p.y,1,1);
   }
-  ctx.putImageData(img,0,0);
 
   requestAnimationFrame(step);
 }
