@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Free Swipe Particles</title>
+<title>Swipe Comet Particles</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
 html, body {margin:0; padding:0; width:100%; height:100%; background:#111; overflow:hidden;}
@@ -23,10 +23,12 @@ document.addEventListener('keydown', e => {
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-let SPACING = 4;
+let SPACING = 6;
+let DRAG = 0.92;
+let EASE = 0.15;
+let COLOR = 220;
 let particles = [];
-let swipes = [];
-const trailLength = 15;
+let pointers = [];
 
 function resize() {
   canvas.width = window.innerWidth;
@@ -38,7 +40,11 @@ function resize() {
     for(let x=0; x<cols; x++){
       particles.push({
         x: x*SPACING + SPACING/2,
-        y: y*SPACING + SPACING/2
+        y: y*SPACING + SPACING/2,
+        ox: x*SPACING + SPACING/2,
+        oy: y*SPACING + SPACING/2,
+        vx: 0,
+        vy: 0
       });
     }
   }
@@ -47,13 +53,13 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-function addSwipe(x,y){
-  swipes.push({history: [{x,y}]});
+function addPointer(x,y){
+  pointers.push({x,y});
 }
 
-canvas.addEventListener('mousemove', e => addSwipe(e.clientX,e.clientY));
+canvas.addEventListener('mousemove', e => addPointer(e.clientX,e.clientY));
 canvas.addEventListener('touchmove', e => {
-  for(let t of e.touches) addSwipe(t.clientX,t.clientY);
+  for(let t of e.touches) addPointer(t.clientX,t.clientY);
   e.preventDefault();
 },{passive:false});
 
@@ -61,25 +67,38 @@ function step(){
   const w = canvas.width;
   const h = canvas.height;
 
-  ctx.fillStyle = 'rgba(17,17,17,0.2)';
+  ctx.fillStyle = 'rgba(17,17,17,0.25)';
   ctx.fillRect(0,0,w,h);
 
-  // Draw static particle field
-  ctx.fillStyle = 'rgb(220,220,220)';
+  // particle animation
   for(let p of particles){
-    ctx.fillRect(p.x,p.y,0.5,0.5);
+    for(let pointer of pointers){
+      let dx = pointer.x - p.x;
+      let dy = pointer.y - p.y;
+      let d = dx*dx + dy*dy;
+      if(d < 2500){ // radius of effect
+        let f = -2500/d;
+        let angle = Math.atan2(dy,dx);
+        p.vx += f*Math.cos(angle);
+        p.vy += f*Math.sin(angle);
+      }
+    }
+    p.x += (p.vx *= DRAG) + (p.ox - p.x)*EASE;
+    p.y += (p.vy *= DRAG) + (p.oy - p.y)*EASE;
   }
 
-  // Draw swipe trails
-  for(let swipe of swipes){
-    swipe.history.push({...swipe.history[swipe.history.length-1]});
-    if(swipe.history.length>trailLength) swipe.history.shift();
-    for(let i=0;i<swipe.history.length;i++){
-      const t = swipe.history[i];
-      ctx.fillStyle = `rgba(220,220,220,${i/trailLength})`;
-      ctx.fillRect(t.x,t.y,1,1);
-    }
+  // draw particles
+  const img = ctx.createImageData(w,h);
+  const data = img.data;
+  for(let p of particles){
+    let n = (~~p.x + ~~p.y*w)*4;
+    data[n] = data[n+1] = data[n+2] = COLOR;
+    data[n+3] = 255;
   }
+  ctx.putImageData(img,0,0);
+
+  // clear pointers after frame
+  pointers = [];
 
   requestAnimationFrame(step);
 }
