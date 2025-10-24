@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ultimate Comet Particles</title>
+<title>Physics Comet Swipe</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
 html, body {margin:0; padding:0; width:100%; height:100%; background:#111; overflow:hidden;}
@@ -19,15 +19,13 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 let SPACING = 2;
-let PARTICLE_SIZE = 1.6;
-let SWIPE_SIZE = 1.2;
-let DRAG = 0.92;
-let EASE = 0.015; // slower return
-let COLOR_BASE = 220;
+let PARTICLE_SIZE = 1.5;
+let DRAG = 0.90;
+let EASE = 0.03;       // slow return
+let COLOR = 220;
 let INFLUENCE_RADIUS = 4000;
 let particles = [];
 let pointers = [];
-let idleOffset = 0;
 
 function resize() {
   canvas.width = window.innerWidth;
@@ -43,9 +41,7 @@ function resize() {
         ox: x*SPACING + SPACING/2,
         oy: y*SPACING + SPACING/2,
         vx: 0,
-        vy: 0,
-        size: PARTICLE_SIZE,
-        colorOffset: Math.random()*60
+        vy: 0
       });
     }
   }
@@ -68,46 +64,32 @@ function step(){
   const w = canvas.width;
   const h = canvas.height;
 
-  // fade background for smooth trails
+  // fade for trail effect
   ctx.fillStyle = 'rgba(17,17,17,0.18)';
   ctx.fillRect(0,0,w,h);
 
-  idleOffset += 0.001;
-
   for(let p of particles){
-    // subtle idle drift
-    let driftX = Math.sin(p.ox*0.01 + idleOffset)*0.3;
-    let driftY = Math.cos(p.oy*0.01 + idleOffset)*0.3;
-
     // swipe influence
-    let closestDistance = Infinity;
     for(let pointer of pointers){
       let dx = pointer.x - p.x;
       let dy = pointer.y - p.y;
       let d = dx*dx + dy*dy;
       if(d < INFLUENCE_RADIUS){
-        closestDistance = Math.min(closestDistance, Math.sqrt(d));
         let f = -INFLUENCE_RADIUS/d;
         let angle = Math.atan2(dy,dx);
         p.vx += f*Math.cos(angle);
         p.vy += f*Math.sin(angle);
       }
     }
-
     // update position
-    p.x += (p.vx *= DRAG) + (p.ox - p.x)*EASE + driftX;
-    p.y += (p.vy *= DRAG) + (p.oy - p.y)*EASE + driftY;
-
-    // adjust particle size for swipe
-    p.size = closestDistance < 60 ? SWIPE_SIZE : PARTICLE_SIZE;
+    p.x += (p.vx *= DRAG) + (p.ox - p.x)*EASE;
+    p.y += (p.vy *= DRAG) + (p.oy - p.y)*EASE;
   }
 
   // draw particles
+  ctx.fillStyle = `rgb(${COLOR},${COLOR},${COLOR})`;
   for(let p of particles){
-    let hue = (COLOR_BASE + p.colorOffset) % 360;
-    let alpha = 0.8;
-    ctx.fillStyle = `hsla(${hue}, 100%, 80%, ${alpha})`;
-    ctx.fillRect(p.x,p.y,p.size,p.size);
+    ctx.fillRect(p.x,p.y,PARTICLE_SIZE,PARTICLE_SIZE);
   }
 
   pointers = [];
